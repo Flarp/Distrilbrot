@@ -1,0 +1,53 @@
+#!/bin/bash
+
+
+if [ "$1" == "--compile" ]
+then
+	time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3
+elif [ "$1" == "--install" ]
+then
+	# get the users architecture
+	arch="$(uname -m)"
+
+	# get the number of cores the user has
+	cores="$(nproc)"
+	
+	if [ $arch == "i686" ]
+	then
+		echo -e "\033[0;33mThis program will only work on 32 bit versions of Linux, and your computer appears to be 64 bit. No promises this will work.\033[0m"
+	fi
+	echo $arch	
+	# download and extract GMP and MPFR
+	wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz
+	tar -xvf gmp-6.1.2.tar.lz 
+	wget https://mpfr.org/mpfr-current/mpfr-3.1.5.tar.xz
+	tar -xvf mpfr-3.1.5.tar.xz
+
+	# remove the archives once extracted
+	rm gmp-6.1.2.tar.lz mpfr-3.1.5.tar.xz
+
+	# make a directory for MPFR C++
+	mkdir mpfrcxx
+	
+	# download and extract MPFR C++
+	cd mpfrcxx
+	wget http://holoborodko.com/pavel/wp-content/plugins/download-monitor/download.php?id=4
+	unzip download.php?id=4 
+	
+	# we have everything now, we can start configuring and making
+	cd ../gmp-6.1.2
+	EMCONFIGURE_JS=1 emconfigure ./configure --disable-assembly
+	$(emmake make -j$cores)
+
+	emmake make install
+	cd ../mpfr-3.1.5
+	EMCONFIGURE_JS=1 emconfigure ./configure --host=none --build=none --with-gmp=/usr/local/
+	$(emmake make -j$cores)
+	emmake make install
+	cd ..	
+
+	echo -e "\033[0;32mInstallation complete! You can compile using ./mandelbrot-make --compile\033[0m"
+	
+fi
+
+
