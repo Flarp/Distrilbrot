@@ -78,8 +78,6 @@ mpreal mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) 
 		zoom = pow(2, steps);
 		if (exit == true) {
 			break;
-		} else {
-			exit = true;
 		}
 
 		

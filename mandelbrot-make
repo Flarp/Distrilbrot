@@ -6,17 +6,50 @@ then
 	time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3
 elif [ "$1" == "--install" ]
 then
+	
 	# get the users architecture
 	arch="$(uname -m)"
 
 	# get the number of cores the user has
 	cores="$(nproc)"
 	
-	if [ $arch == "i686" ]
+	if [ $arch == "x86_64" ]
 	then
-		echo -e "\033[0;33mThis program will only work on 32 bit versions of Linux, and your computer appears to be 64 bit. No promises this will work.\033[0m"
+		printf "\033[0;31mThis program will only work on 32 bit versions of Linux, and your computer appears to be 64 bit. No promises this will work.\033[0m\n"
 	fi
-	echo $arch	
+	printf "Checking for em++... "
+
+	if hash em++ 2>/dev/null
+	then 
+		printf "ok\n"
+	else
+		printf "no\n"
+		printf "\033[0;31mERROR: em++ not found!\033[0m\n"
+		exit 1
+	fi
+
+	printf "Checking for emconfigure... "
+
+	if hash emconfigure 2>/dev/null
+	then
+		printf "ok\n"
+	else
+		printf "no\n"
+		printf "\033[0;31mERROR: emconfigure not found!\033[0m\n"
+		exit 1
+	fi
+
+	printf "Checking for emmake... "
+
+	if hash emmake 2>/dev/null
+	then
+		printf "ok\n"
+	else
+		printf "no\n"
+		printf "\033[0;31mERROR: emmake not found!\033[0m\n"
+		exit 1
+	fi	
+
 	# download and extract GMP and MPFR
 	wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz
 	tar -xvf gmp-6.1.2.tar.lz 
@@ -46,7 +79,7 @@ then
 	emmake make install
 	cd ..	
 
-	echo -e "\033[0;32mInstallation complete! You can compile using ./mandelbrot-make --compile\033[0m"
+	printf "\033[0;32mInstallation complete! You can compile using ./mandelbrot-make --compile\033[0m\n"
 	
 fi
 
