@@ -4,6 +4,7 @@
 
 using namespace mpfr;
 
+
 mpreal scale(mpreal num, mpreal old_min, mpreal old_max, mpreal new_min, mpreal new_max) {
 	mpreal numerator = (new_max-new_min)*(num-old_min);
 	mpreal denominator = old_max - old_min;
