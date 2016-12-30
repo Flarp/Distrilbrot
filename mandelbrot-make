@@ -5,13 +5,13 @@ if [ "$1" == "--compile" ]
 then
 	time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3
 elif [ "$1" == "--install" ]
-then
-	
+then	
+  
+  # get the number of cores the user has
+  cores="$(nproc)"
+
 	# get the users architecture
 	arch="$(uname -m)"
-
-	# get the number of cores the user has
-	cores="$(nproc)"
 	
 	if [ $arch == "x86_64" ]
 	then
