@@ -1,9 +1,12 @@
 #!/bin/bash
 
 
-if [ "$1" == "--compile" ]
+if [ "$1" == "--compile-asm" ]
 then
-	time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3
+  time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3
+elif [ "$1" == "--compile-wasm" ]
+then
+  time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s "BINARYEN_METHOD='interpret-binary'"
 elif [ "$1" == "--install" ]
 then	
   
