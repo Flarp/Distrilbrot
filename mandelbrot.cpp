@@ -1,7 +1,7 @@
 #include<iostream>
 #include<mpreal.h>
 #include<cmath>
-#include<string>
+#include"gmpxx.h"
 
 /*
   * Distrilbrot - Distributed Mandelbrot set computing program
@@ -65,7 +65,6 @@ mpreal variation(int data[], short size) {
   mpreal initial_mean = 0.0;
   for (short x = 0; x < size; x++) {
     initial_mean += data[x];
-    values[i]
   }
 
   initial_mean /= size;
@@ -79,9 +78,9 @@ mpreal variation(int data[], short size) {
   return final_mean/size;
 }
 
-int mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) {
+int mandelbrot_steps(mpreal x_center, mpreal y_center, mpz_class starting_zoom) {
   int steps = 0;
-  mpreal zoom = starting_zoom;
+  mpz_class zoom = starting_zoom;
 
   int values[2000][2];
 

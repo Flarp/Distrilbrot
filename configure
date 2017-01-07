@@ -101,7 +101,7 @@ do
     tar -xvf gmp-6.1.2.tar.lz 
     rm gmp-6.1.2.tar.lz
     cd gmp-6.1.2
-    EMCONFIGURE_JS=1 emconfigure ./configure --disable-assembly
+    EMCONFIGURE_JS=1 emconfigure ./configure --disable-assembly --enable-cxx
     emmake make -j$cores
     emmake make install
     cd ..
