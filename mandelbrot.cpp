@@ -1,13 +1,14 @@
 #include<iostream>
 #include<mpreal.h>
 #include<cmath>
+#include<string>
 
 /*
   * Distrilbrot - Distributed Mandelbrot set computing program
   * (If you don't know what the Mandelbrot set is, look it up, or 
   * this won't really make sense)
   *
-  * Written in C++, compiled to asm.js and wasm using Emscripten and Binaryen
+  * Written in C++, compiled to asm.js and wasm using Emscripten and Binaryen.
   * It has two modes, computing steps and computing sets.
   * Computing Mandelbrot sets works the way you expect it, it
   * zooms into the set, computing every pixel. This is obviously
@@ -52,17 +53,19 @@ mpreal variation(mpreal data[], short size) {
 	for (short x = 0; x < size; x++) {
 		final_mean += pow((data[x]-initial_mean), 2);
 	}
+  
 
 
 
 	return final_mean/size;
 	
-}
+} 
 
 mpreal variation(int data[], short size) {
   mpreal initial_mean = 0.0;
   for (short x = 0; x < size; x++) {
     initial_mean += data[x];
+    values[i]
   }
 
   initial_mean /= size;
@@ -76,6 +79,27 @@ mpreal variation(int data[], short size) {
   return final_mean/size;
 }
 
+int mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) {
+  int steps = 0;
+  mpreal zoom = starting_zoom;
+
+  int values[2000][2];
+
+  for (int i = 0; i < 640; i++) {
+    values[i][0] = i;
+    values[i][1] = 120;
+  }
+
+  for (int i = 640; i < 1280; i++) {
+    values[i][0] = i-640;
+    values[i][1] = 240;
+  }
+
+
+}
+
+/*
+
 mpreal mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) {
 	int steps = 0;
 	
@@ -85,34 +109,33 @@ mpreal mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) 
 	while(true) {
 
 		bool exit = true;
+    for (char itr = 0; itr < 4; itr++) {
+    short x_itr, y_itr;
+    
+      mpreal x, y, x_scaled, y_scaled;    
 
-		for(short xi = 0; xi < 640; xi++) {
-			int results[360];
-			for (short yi = 0; yi < 360; yi++) {
-				mpreal x, y, x_scaled, y_scaled;
+      x_scaled = scale(((xi-320)+(x_center*zoom))/zoom, 0, 640, -2.5, 1);
+      y_scaled = scale(((yi-180)+(y_center*zoom))/zoom, 0, 360, -1, 1);
 
-				x_scaled = scale(((xi-320)+(x_center*zoom))/zoom, 0, 640, -2.5, 1);
-				y_scaled = scale(((yi-180)+(y_center*zoom))/zoom, 0, 360, -1, 1);
+      x = 0.0;
+      y = 0.0;
+      
+      int iteration = 0;
+      
+      while((x*x + y*y) < 4 && iteration < 255) {
+        mpreal xtemp = x*x - y*y + x_scaled;
+        y = 2*x*y + y_scaled;
+        x = xtemp;
+        iteration++;
+      }
 
-				x = 0.0;
-				y = 0.0;
-				
-				int iteration = 0;
-				
-				while((x*x + y*y) < 4 && iteration < 255) {
-					mpreal xtemp = x*x - y*y + x_scaled;
-					y = 2*x*y + y_scaled;
-					x = xtemp;
-					iteration++;
-				}
-				results[yi] = iteration;
-        std::cout << "Just completed row " << xi << " and column " << yi << " that had an iteration count of " << iteration << std::endl;
-			}
+      if (variation(results, 360) > 3) {
+        exit = false;
+        break;
+      }
+    } 
 
-			if (variation(results, 360) > 3) {
-				exit = false;
-				break;
-		}
+			
 
 			
 		}
@@ -126,6 +149,8 @@ mpreal mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) 
 	}
 	return steps;
 }
+
+*/
 
 int main(void) {
   std::cout << mandelbrot_steps(320, 180, 1) << std::endl;

@@ -1,0 +1,134 @@
+#!/bin/bash
+
+for arg in "$@"
+do
+  if [ $arg == "--help" ] || [ $arg == "-h" ]
+  then
+    printf "\nDistrilbrot - made by Flarp\n"
+    printf "Configure help\n"
+    printf "FLAGS:\n\n"
+    printf "\t--help\tDisplays the help you're seeing right now\n"
+    printf "\t-h\tAlso displays the help you're seeing right now\n"
+    printf "\t--install-gmp\tInstalls GMP and makes it using Emscripten\n"
+    printf "\t--install-mpfr\tInstalls MPFR and makes it using Emscripten\n"
+    printf "\t--install-mpfrcxx\tInstalls the MPFR C++ wrapper\n"
+    printf "\n\nNOTE: If you're installing everything, you must provide the flags in the order given above (gmp, mpfr, mpfrcxx), as MPFR depends on GMP, and MPFRCXX depends on MPFR\n\n"
+    exit 0
+  fi
+done
+
+# get the number of cores the user has
+cores="$(nproc)"
+
+# get the users architecture
+arch="$(uname -m)"
+
+if [ $arch == "x86_64" ]
+then
+  printf "\033[0;31mThis program will only work on 32 bit versions of Linux, and your computer appears to be 64 bit. No promises this will work.\033[0m\n"
+fi
+printf "Checking for em++... "
+
+if hash em++ 2>/dev/null
+then 
+  printf "ok\n"
+else
+  printf "no\n"
+  printf "\033[0;31mERROR: em++ not found!\033[0m\n"
+  exit 1
+fi
+
+printf "Checking for emconfigure... "
+
+if hash emconfigure 2>/dev/null
+then
+  printf "ok\n"
+else
+  printf "no\n"
+  printf "\033[0;31mERROR: emconfigure not found!\033[0m\n"
+  exit 1
+fi
+
+printf "Checking for emmake... "
+
+if hash emmake 2>/dev/null
+then
+  printf "ok\n"
+else
+  printf "no\n"
+  printf "\033[0;31mERROR: emmake not found!\033[0m\n"
+  exit 1
+fi
+
+printf "Checking for a binaryen install... "
+
+binaryen=0
+
+if hash asm2wasm 2>/dev/null
+then
+  printf "ok\n"
+  binaryen=1
+else
+  printf "none found, webassembly option will be disabled\n"
+fi
+
+> Makefile
+
+printf "all:\n" >> Makefile
+
+if [ $binaryen -eq 1 ]
+then
+  printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.j -s ASSERTIONS=1 --llvm-lto 3 && time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.wasm -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\"\n" >> Makefile
+else
+   printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.asm.js -s ASSERTIONS=1 --llvm-lto 3\n" >> Makefile
+fi
+
+printf "\n" >> Makefile
+
+printf "js:\n" >> Makefile
+printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3\n" >> Makefile
+
+printf "\n" >> Makefile
+
+printf "wasm:\n" >> Makefile
+printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.wasm -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\"\n" >> Makefile
+
+for arg in "$@"
+do
+  if [ $arg == "--install-gmp" ]
+  then
+    wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz
+    tar -xvf gmp-6.1.2.tar.lz 
+    rm gmp-6.1.2.tar.lz
+    cd gmp-6.1.2
+    EMCONFIGURE_JS=1 emconfigure ./configure --disable-assembly
+    emmake make -j$cores
+    emmake make install
+    cd ..
+    rm -rf gmp-6.1.2
+  elif [ $arg == "--install-mpfr" ]
+  then    
+    wget http://www.mpfr.org/mpfr-current/mpfr-3.1.5.tar.xz
+    tar -xvf mpfr-3.1.5.tar.xz
+    cd mpfr-3.1.5
+    EMCONFIGURE_JS=1 emconfigure ./configure --host=none --build=none --with-gmp=/usr/local/
+    emmake make -j$cores
+    emmake make install
+    rm -rf mpfr-3.1.5
+    cd ..
+  elif [ $arg == "--install-mpfrcxx" ]
+  then
+    mkdir mpfrcxx
+    cd mpfrcxx
+    wget http://holoborodko.com/pavel/wp-content/plugins/download-monitor/download.php?id=4
+    unzip download.php?id=4
+  fi
+
+done
+	
+
+printf "\033[0;32mConfiguring complete, make can be run now\033[0m\n"
+exit 0
+
+
+

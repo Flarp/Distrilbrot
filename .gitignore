@@ -1,8 +1,4 @@
 mpfrcxx
 gmp-6.1.2
 mpfr-3.1.5
-mandelbrot.js.mem
-mandelbrot.js
-mandelbrot.wast
-mandelbrot.wasm
-mandelbrot.asm.js
+Makefile
