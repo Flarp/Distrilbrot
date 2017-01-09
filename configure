@@ -78,9 +78,9 @@ printf "all:\n" >> Makefile
 
 if [ $binaryen -eq 1 ]
 then
-  printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.j -s ASSERTIONS=1 --llvm-lto 3 && time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.wasm -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\"\n" >> Makefile
+  printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3 && time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libgmpxx.a /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot-wasm.js -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" --pre-js pre-js.js && node after-wasm.js\n" >> Makefile
 else
-   printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.asm.js -s ASSERTIONS=1 --llvm-lto 3\n" >> Makefile
+   printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3\n" >> Makefile
 fi
 
 printf "\n" >> Makefile
@@ -91,7 +91,8 @@ printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local
 printf "\n" >> Makefile
 
 printf "wasm:\n" >> Makefile
-printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.wasm -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\"\n" >> Makefile
+printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot-wasm.js -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" --pre-js pre-js.js && node after-wasm.js\n" >> Makefile
+
 
 for arg in "$@"
 do

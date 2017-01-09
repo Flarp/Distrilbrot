@@ -1,7 +1,6 @@
 #include<iostream>
-#include<mpreal.h>
+#include"mpreal.h"
 #include<cmath>
-#include"gmpxx.h"
 
 /*
   * Distrilbrot - Distributed Mandelbrot set computing program
@@ -31,125 +30,108 @@
   * to zoom for an unholy amount of time without zooming off the set.
 */
 
-using namespace mpfr;
 
-mpreal scale(mpreal num, mpreal old_min, mpreal old_max, mpreal new_min, mpreal new_max) {
-	mpreal numerator = (new_max-new_min)*(num-old_min);
-	mpreal denominator = old_max - old_min;
+// This function scales a number in one range to another range. It's used to scale a pixel
+// on the screen to the Mandelbrot's range
+mpfr::mpreal scale(mpfr::mpreal num, mpfr::mpreal old_min, mpfr::mpreal old_max, mpfr::mpreal new_min, mpfr::mpreal new_max) {
+	mpfr::mpreal numerator = (new_max-new_min)*(num-old_min);
+	mpfr::mpreal denominator = old_max - old_min;
 	return (numerator/denominator)+new_min;
 }
 
-mpreal variation(mpreal data[], short size) {
-	mpreal initial_mean = 0.0;
-	for (short x = 0; x < size; x++) {
-		initial_mean += data[x];
-	}
-
-	initial_mean /= size;
-
-
-	mpreal final_mean = 0.0;
-
-	for (short x = 0; x < size; x++) {
-		final_mean += pow((data[x]-initial_mean), 2);
-	}
-  
-
-
-
-	return final_mean/size;
-	
-} 
-
-mpreal variation(int data[], short size) {
-  mpreal initial_mean = 0.0;
-  for (short x = 0; x < size; x++) {
+// This function finds the total variation of a set of numbers.
+// It's used to see if computing the Mandelbrot of that area
+// has more than one color. If not, we have hit a dead end.
+mpfr::mpreal variation(int data[], short start, short stop) {
+  mpfr::mpreal initial_mean = 0.0;
+  short size = (stop-start);
+  for (short x = start; x < stop; x++) {
     initial_mean += data[x];
   }
 
   initial_mean /= size;
 
-  mpreal final_mean = 0.0;
+  mpfr::mpreal final_mean = 0.0;
 
-  for (short x = 0; x < size; x++) {
+  for (short x = start; x < stop; x++) {
     final_mean += pow((data[x]-initial_mean), 2);
   }
 
   return final_mean/size;
 }
 
-int mandelbrot_steps(mpreal x_center, mpreal y_center, mpz_class starting_zoom) {
+int mandelbrot_steps(mpfr::mpreal x_center, mpfr::mpreal y_center, mpfr::mpreal starting_zoom) {
   int steps = 0;
-  mpz_class zoom = starting_zoom;
+  mpfr::mpreal zoom = starting_zoom;
 
-  int values[2000][2];
+  while(true) {
+    // got this from http://math.stackexchange.com/a/17045
+    // the user said they has no idea where they got the equation from, so I actually
+    // don't know if they made it or stole it, but it works, so credit to the original
+    // creator.
+    mpfr::mpreal MAX_ITERATIONS = mpfr::sqrt(mpfr::abs(2*mpfr::sqrt(mpfr::abs(1-mpfr::sqrt(5*zoom)))))*66.5;
+    int values[1000][2];
+    int results[1000];
 
-  for (int i = 0; i < 640; i++) {
-    values[i][0] = i;
-    values[i][1] = 120;
-  }
+    std::cout << MAX_ITERATIONS << std::endl;
 
-  for (int i = 640; i < 1280; i++) {
-    values[i][0] = i-640;
-    values[i][1] = 240;
-  }
-
-
-}
-
-/*
-
-mpreal mandelbrot_steps(mpreal x_center, mpreal y_center, mpreal starting_zoom) {
-	int steps = 0;
-	
-	mpreal zoom = starting_zoom;
-	
-	
-	while(true) {
-
-		bool exit = true;
-    for (char itr = 0; itr < 4; itr++) {
-    short x_itr, y_itr;
-    
-      mpreal x, y, x_scaled, y_scaled;    
-
-      x_scaled = scale(((xi-320)+(x_center*zoom))/zoom, 0, 640, -2.5, 1);
-      y_scaled = scale(((yi-180)+(y_center*zoom))/zoom, 0, 360, -1, 1);
-
-      x = 0.0;
-      y = 0.0;
+    mpfr::mpreal y_scaled = scale(y_center, 0, 360, -1, 1);
+    for (short i = 0; i < 640; i++) {
+      mpfr::mpreal x_scaled = scale(((i-320)/zoom)+x_center, 0, 640, -2.5, 1); 
+      mpfr::mpreal x = 0.0;
+      mpfr::mpreal y = 0.0;
       
       int iteration = 0;
       
-      while((x*x + y*y) < 4 && iteration < 255) {
-        mpreal xtemp = x*x - y*y + x_scaled;
+      while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
+        mpfr::mpreal xtemp = x*x - y*y + x_scaled;
         y = 2*x*y + y_scaled;
         x = xtemp;
         iteration++;
       }
 
-      if (variation(results, 360) > 3) {
-        exit = false;
-        break;
+      results[i] = iteration;
+
+    }
+
+    if (variation(results, 0, 640) > 3) {
+      steps++;
+      std::cout << "Continuing after first iteration, steps is " << steps << " and zoom is " << zoom << std::endl;
+      zoom = mpfr::pow(2, steps);
+      continue;   
+    }
+
+    mpfr::mpreal x_scaled = scale(x_center, 0, 640, -2.5, 1);
+    for (short i = 640; i < 1000; i++) {
+      mpfr::mpreal y_scaled = scale(((i-820)/zoom)+y_center, 0, 360, -1, 1);
+
+      mpfr::mpreal x = 0.0;
+      mpfr::mpreal y = 0.0;
+      
+      int iteration = 0;
+      
+      while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
+        mpfr::mpreal xtemp = x*x - y*y + x_scaled;
+        y = 2*x*y + y_scaled;
+        x = xtemp;
+        iteration++;
       }
-    } 
 
-			
+      results[i] = iteration;
+    }
 
-			
-		}
-		steps++;
-		zoom = pow(2, steps);
-		if (exit == true) {
-			break;
-		}
+    if (variation(results, 640, 1000) > 3) {
+      steps++;
+      std::cout << "Continuing after second iteration, steps is " << steps  << " and zoom is " << zoom << std::endl;
+      zoom = pow(2, steps);
+      continue;  
+    }
 
-		
-	}
-	return steps;
+    break;
+  
+  }
+  return steps;
 }
-
-*/
 
 int main(void) {
   std::cout << mandelbrot_steps(320, 180, 1) << std::endl;
