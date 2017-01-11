@@ -77,10 +77,14 @@ int mandelbrot_steps(mpfr::mpreal x_center, mpfr::mpreal y_center, mpfr::mpreal 
 
     mpfr::mpreal y_scaled = scale(y_center, 0, 360, -1, 1);
     for (short i = 0; i < 640; i++) {
-      mpfr::mpreal x_scaled = scale(((i-320)/zoom)+x_center, 0, 640, -2.5, 1); 
-      mpfr::mpreal x = 0.0;
-      mpfr::mpreal y = 0.0;
+      mpfr::mpreal x_scaled = scale(((i-320)/zoom)+x_center, 0, 640, -2.5, 1);
+
+      mpfr::mpreal x;
+      mpfr::mpreal y;
       
+      x = 0;
+      y = 0;
+
       int iteration = 0;
       
       while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
@@ -131,6 +135,27 @@ int mandelbrot_steps(mpfr::mpreal x_center, mpfr::mpreal y_center, mpfr::mpreal 
   
   }
   return steps;
+}
+
+int mandelbrot_grid(int xi, int yi, mpfr::mpreal x_offset, mpfr::mpreal y_offset, mpfr::mpreal zoom) {
+  mpfr::mpreal MAX_ITERATIONS = mpfr::sqrt(mpfr::abs(2*mpfr::sqrt(mpfr::abs(1-mpfr::sqrt(5*zoom)))))*66.5;
+
+  mpfr::mpreal x = 0;
+  mpfr::mpreal y = 0;
+
+  int iteration = 0;
+
+  mpfr::mpreal x_scaled = scale((((xi+x_offset)-320)/zoom), 0, 640, -2.5, 1);
+  mpfr::mpreal y_scaled = scale((((yi+y_offset)-180)/zoom), 0, 360, -1, 1);
+
+  while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
+    mpfr::mpreal xtemp = x*x - y*y + x_scaled;
+    y = 2*x*y + y_scaled;
+    x = xtemp;
+    iteration++;
+  }
+
+  return iteration;
 }
 
 int main(void) {

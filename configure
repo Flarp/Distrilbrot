@@ -1,5 +1,12 @@
 #!/bin/bash
 
+
+base_flags="-std=c++11 -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -s ASSERTIONS=1 --llvm-lto 3 -v"
+asm_flags="-o mandelbrot.js --memory-init-file 0"
+wasm_flags="-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" --pre-js packings/wasm/pre-wasm.js -o mandelbrot-wasm.js"
+
+node_commands="time node after.js"
+
 for arg in "$@"
 do
   if [ $arg == "--help" ] || [ $arg == "-h" ]
@@ -68,8 +75,20 @@ if hash asm2wasm 2>/dev/null
 then
   printf "ok\n"
   binaryen=1
+  node_commands="$node_commands --wasm"
 else
   printf "none found, webassembly option will be disabled\n"
+fi
+
+printf "Checking for node... "
+
+if hash node 2>/dev/null
+then
+  printf "ok\n"
+else
+  printf "no\n"
+  printf "\033[0;31mERROR: node not found!\033[0m\n"
+  exit 1
 fi
 
 > Makefile
@@ -78,21 +97,25 @@ printf "all:\n" >> Makefile
 
 if [ $binaryen -eq 1 ]
 then
-  printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3 && time em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libgmpxx.a /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot-wasm.js -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" --pre-js pre-js.js && node after-wasm.js\n" >> Makefile
+  printf "\ttime em++ mandelbrot.cpp $base_flags $asm_flags && time em++ mandelbrot.cpp $base_flags $wasm_flags && $node_commands\n" >> Makefile
 else
-   printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3\n" >> Makefile
+   printf "\ttime em++ mandelbrot.cpp $base_flags $asm_flags && $node_commands\n" >> Makefile
 fi
 
 printf "\n" >> Makefile
 
 printf "js:\n" >> Makefile
-printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot.js -s ASSERTIONS=1 --llvm-lto 3\n" >> Makefile
+printf "\ttime $base_flags $asm_flags && $node_commands\n" >> Makefile
 
 printf "\n" >> Makefile
 
 printf "wasm:\n" >> Makefile
-printf "\ttime em++ mandelbrot.cpp -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -o mandelbrot-wasm.js -s ASSERTIONS=1 --llvm-lto 3 -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" --pre-js pre-js.js && node after-wasm.js\n" >> Makefile
+printf "\ttime em++ mandelbrot.cpp $base_flags $wasm_flags && $node_commands\n" >> Makefile
 
+printf "\n" >> Makefile
+
+printf "clean:\n" >> Makefile
+printf "\tls | grep -P 'mandelbrot.*.(js|mem|wast|wasm)' | xargs -d'\\\n' rm\n" >> Makefile
 
 for arg in "$@"
 do
@@ -128,7 +151,7 @@ do
 done
 	
 
-printf "\033[0;32mConfiguring complete, make can be run now\033[0m\n"
+printf "\n\n\033[0;32mConfiguring complete, make can be run now\033[0m\n\n"
 exit 0
 
 
