@@ -1,6 +1,7 @@
 const args = process.argv.slice(2)
 const fs = require("fs")
 
+
 if (!args.includes("--wasm")) {
   const asm = fs.readFileSync("./mandelbrot.js", "utf8")
   fs.writeFileSync("./final.js", asm)

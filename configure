@@ -91,6 +91,16 @@ else
   exit 1
 fi
 
+printf "Checking for uglifyjs (optional)... "
+
+if hash uglifyjs 2>/dev/null
+then
+  node_commands="$node_commands --uglify"
+  printf "ok\n"
+else
+  printf "no\n"
+fi
+
 > Makefile
 
 printf "all:\n" >> Makefile
@@ -115,7 +125,7 @@ printf "\ttime em++ mandelbrot.cpp $base_flags $wasm_flags && $node_commands\n" 
 printf "\n" >> Makefile
 
 printf "clean:\n" >> Makefile
-printf "\tls | grep -P 'mandelbrot.*.(js|mem|wast|wasm)' | xargs -d'\\\n' rm\n" >> Makefile
+printf "\tls | grep -P 'mandelbrot.*.(js|mem|wast|wasm)' | xargs -d'\\\n' rm && rm final.js\n" >> Makefile
 
 for arg in "$@"
 do
