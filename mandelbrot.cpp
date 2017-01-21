@@ -1,6 +1,6 @@
-#include<iostream>
+#include<ostream>
 #include"mpreal.h"
-
+#include<string>
 /*
   * Distrilbrot - Distributed Mandelbrot set computing program
   * (If you don't know what the Mandelbrot set is, look it up, or 
@@ -59,97 +59,114 @@ mpfr::mpreal variation(unsigned int data[], unsigned short start, unsigned short
   return final_mean/size;
 }
 
-unsigned int mandelbrot_steps(mpfr::mpreal x_center, mpfr::mpreal y_center, unsigned int starting_zoom) {
-  unsigned int steps = 0;
-  unsigned int zoom = starting_zoom;
+extern "C" {
+  unsigned int mandelbrot_steps(std::string x_str, std::string y_str, unsigned int starting_zoom) {
+    std::cout << "when your hands get dirty" << std::endl;
+    mpfr::mpreal x_center = x_str;
+    mpfr::mpreal y_center = y_str;
+    unsigned int steps = 0;
+    unsigned int zoom = starting_zoom;
 
-  while(true) {
-    unsigned int MAX_ITERATIONS = 255;
-    int values[1000][2];
-    unsigned int results[1000];
-    mpfr::mpreal y_scaled = scale(y_center, 0, 360, -1, 1);
-    for (unsigned short i = 0; i < 640; i++) {
-      mpfr::mpreal x_scaled = scale((((i-320))>>zoom) + x_center, 0, 640, -2.5, 1);
-      mpfr::mpreal x;
-      mpfr::mpreal y;
-      
-      x = 0;
-      y = 0;
+    while(true) {
+      unsigned int MAX_ITERATIONS = 255;
+      int values[1000][2];
+      unsigned int results[1000];
+      mpfr::mpreal y_scaled = scale(y_center, 0, 360, -1, 1);
+      for (unsigned short i = 0; i < 640; i++) {
+        mpfr::mpreal x_scaled = scale(((i-320)>>zoom) + x_center, 0, 640, -2.5, 1);
+        mpfr::mpreal x;
+        mpfr::mpreal y;
+        
+        x = 0;
+        y = 0;
 
-      unsigned int iteration = 0;
-      
-      while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
-        mpfr::mpreal xtemp = x*x - y*y + x_scaled;
-        y = 2*x*y + y_scaled;
-        x = xtemp;
-        iteration++;
+        unsigned int iteration = 0;
+        
+        while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
+          mpfr::mpreal xtemp = x*x - y*y + x_scaled;
+          y = 2*x*y + y_scaled;
+          x = xtemp;
+          iteration++;
+        }
+
+        results[i] = iteration;
+
       }
 
-      results[i] = iteration;
+      if (variation(results, 0, 640) > 3) {
+        steps++;
+        std::cout << "Continuing after first iteration, steps is " << steps << " and zoom is " << zoom << std::endl;
+        zoom++;
+        continue;   
+      }
+      
+      mpfr::mpreal x_scaled = scale(x_center, 0, 640, -2.5, 1);
+      for (unsigned short i = 640; i < 1000; i++) {
+        mpfr::mpreal y_scaled = scale((((i-820)) >> zoom) + y_center, 0, 360, -1, 1);
 
-    }
+        mpfr::mpreal x = 0.0;
+        mpfr::mpreal y = 0.0;
+        
+        unsigned int iteration = 0;
+        
+        while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
+          mpfr::mpreal xtemp = x*x - y*y + x_scaled;
+          y = 2*x*y + y_scaled;
+          x = xtemp;
+          iteration++;
+        }
 
-    if (variation(results, 0, 640) > 3) {
-      steps++;
-      std::cout << "Continuing after first iteration, steps is " << steps << " and zoom is " << zoom << std::endl;
-      zoom++;
-      continue;   
-    }
+        results[i] = iteration;
+      }
+
+      if (variation(results, 640, 1000) > 3) {
+        steps++;
+        std::cout << "Continuing after second iteration, steps is " << steps  << " and zoom is " << zoom << std::endl;
+        zoom++;
+        continue;  
+      }
+
+      break;
     
-    mpfr::mpreal x_scaled = scale(x_center, 0, 640, -2.5, 1);
-    for (unsigned short i = 640; i < 1000; i++) {
-      mpfr::mpreal y_scaled = scale((((i-820)) >> zoom) + y_center, 0, 360, -1, 1);
-
-      mpfr::mpreal x = 0.0;
-      mpfr::mpreal y = 0.0;
-      
-      unsigned int iteration = 0;
-      
-      while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
-        mpfr::mpreal xtemp = x*x - y*y + x_scaled;
-        y = 2*x*y + y_scaled;
-        x = xtemp;
-        iteration++;
-      }
-
-      results[i] = iteration;
     }
-
-    if (variation(results, 640, 1000) > 3) {
-      steps++;
-      std::cout << "Continuing after second iteration, steps is " << steps  << " and zoom is " << zoom << std::endl;
-      zoom++;
-      continue;  
-    }
-
-    break;
-  
-  }
-  return steps;
-}
-
-unsigned int mandelbrot_grid(int xi, int yi, mpfr::mpreal x_offset, mpfr::mpreal y_offset, unsigned int zoom) {
-  unsigned int MAX_ITERATIONS = 255;
-
-  mpfr::mpreal x = 0;
-  mpfr::mpreal y = 0;
-
-  unsigned int iteration = 0;
-
-  mpfr::mpreal x_scaled = scale((((xi+x_offset)-320)) >> zoom, 0, 640, -2.5, 1);
-  mpfr::mpreal y_scaled = scale((((yi+y_offset)-180)) >> zoom, 0, 360, -1, 1);
-
-  while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
-    mpfr::mpreal xtemp = x*x - y*y + x_scaled;
-    y = 2*x*y + y_scaled;
-    x = xtemp;
-    iteration++;
+    return steps;
   }
 
-  return iteration;
+
+  unsigned int mandelbrot_grid(std::string x_str, std::string y_str) {
+    
+    mpfr::mpreal x_center = x_str;
+    mpfr::mpreal y_center = y_str;
+
+    unsigned int MAX_ITERATIONS = 255;
+
+    mpfr::mpreal x = 0;
+    mpfr::mpreal y = 0;
+
+    unsigned int iteration = 0;
+
+
+    while((x*x + y*y) < 4 && iteration < MAX_ITERATIONS) {
+      mpfr::mpreal xtemp = x*x - y*y + x_center;
+      y = 2*x*y + y_center;
+      x = xtemp;
+      iteration++;
+    }
+
+    return iteration;
+  }
+
+  std::string next_mandelbrot_workset_single(std::string center_str, unsigned int zoom, short offset) {
+    mpfr::mpreal center = center_str;
+
+    mpfr::mpreal iterator = 1;
+    iterator >>= zoom;
+
+    center += (iterator*offset)-(iterator*center);
+    return center.toString();
+  }
 }
 
 int main(void) {
-  std::cout << mandelbrot_steps(320, 180, 0) << std::endl;
-  return 0;
+  std::cout << next_mandelbrot_workset_single("320",3,320) << std::endl;
 }

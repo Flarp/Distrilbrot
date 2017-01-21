@@ -1,9 +1,9 @@
 #!/bin/bash
 
 
-base_flags="-std=c++11 -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -s ASSERTIONS=1 --llvm-lto 3 -v"
-asm_flags="-o mandelbrot.js --memory-init-file 0"
-wasm_flags="-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" --pre-js packings/wasm/pre-wasm.js -o mandelbrot-wasm.js"
+base_flags="-std=c++11 -Impfrcxx /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -I/usr/local/include -O3 -s ASSERTIONS=1 --llvm-lto 3 -v -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS=\"['_mandelbrot_steps', '_mandelbrot_grid','_main']\""
+asm_flags="-o mandelbrot.js --memory-init-file 0 --pre-js packings/asmjs/pre-asmjs.js --post-js packings/asmjs/post-asmjs.js"
+wasm_flags="-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" -o mandelbrot-wasm.js --pre-js packings/wasm/pre-wasm.js"
 
 node_commands="time node after.js"
 
