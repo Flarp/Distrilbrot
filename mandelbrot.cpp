@@ -61,7 +61,6 @@ mpfr::mpreal variation(unsigned int data[], unsigned short start, unsigned short
 
 extern "C" {
   unsigned int mandelbrot_steps(std::string x_str, std::string y_str, unsigned int starting_zoom) {
-    std::cout << "when your hands get dirty" << std::endl;
     mpfr::mpreal x_center = x_str;
     mpfr::mpreal y_center = y_str;
     unsigned int steps = 0;
