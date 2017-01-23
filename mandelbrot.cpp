@@ -1,6 +1,7 @@
 #include<ostream>
 #include"mpreal.h"
 #include<string>
+#include<emscripten.h>
 /*
   * Distrilbrot - Distributed Mandelbrot set computing program
   * (If you don't know what the Mandelbrot set is, look it up, or 
@@ -168,4 +169,10 @@ extern "C" {
 
 int main(void) {
   std::cout << next_mandelbrot_workset_single("320",3,320) << std::endl;
+  EM_ASM({
+    onmessage = function(m) {
+      postMessage({result:Module.ccall('mandelbrot_steps','number',['string','string','number'],[m.data.work.x,m.data.work.y,m.data.work.zoom])});
+    };
+    postMessage({result:'ready'});
+  });
 }
