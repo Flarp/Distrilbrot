@@ -68,17 +68,16 @@ extern "C" {
     unsigned int zoom = starting_zoom;
 
     while(true) {
+      
       unsigned int MAX_ITERATIONS = 255;
-      int values[1000][2];
+      unsigned int MIN_DIFFERENCE = 127;
       unsigned int results[1000];
       mpfr::mpreal y_scaled = scale(y_center, 0, 360, -1, 1);
       for (unsigned short i = 0; i < 640; i++) {
         mpfr::mpreal x_scaled = scale(((i-320)>>zoom) + x_center, 0, 640, -2.5, 1);
-        mpfr::mpreal x;
-        mpfr::mpreal y;
         
-        x = 0;
-        y = 0;
+        mpfr::mpreal x = 0.0;
+        mpfr::mpreal y = 0.0;
 
         unsigned int iteration = 0;
         
@@ -93,13 +92,12 @@ extern "C" {
 
       }
 
-      if (variation(results, 0, 640) > 3) {
+      if (variation(results, 0, 640) > MIN_DIFFERENCE) {
         steps++;
         std::cout << "Continuing after first iteration, steps is " << steps << " and zoom is " << zoom << std::endl;
         zoom++;
         continue;   
-      }
-      
+      } 
       mpfr::mpreal x_scaled = scale(x_center, 0, 640, -2.5, 1);
       for (unsigned short i = 640; i < 1000; i++) {
         mpfr::mpreal y_scaled = scale((((i-820)) >> zoom) + y_center, 0, 360, -1, 1);
@@ -119,13 +117,12 @@ extern "C" {
         results[i] = iteration;
       }
 
-      if (variation(results, 640, 1000) > 3) {
+      if (variation(results, 640, 1000) > MIN_DIFFERENCE) {
         steps++;
         std::cout << "Continuing after second iteration, steps is " << steps  << " and zoom is " << zoom << std::endl;
         zoom++;
         continue;  
-      }
-
+      };
       break;
     
     }
@@ -168,11 +165,14 @@ extern "C" {
 }
 
 int main(void) {
-  std::cout << next_mandelbrot_workset_single("320",3,320) << std::endl;
+  std::cout << mandelbrot_steps("73","32",0) << std::endl;
   EM_ASM({
     onmessage = function(m) {
-      postMessage({result:Module.ccall('mandelbrot_steps','number',['string','string','number'],[m.data.work.x,m.data.work.y,m.data.work.zoom])});
+      var steps = Module.ccall('mandelbrot_steps','number',['string','string','number'],[m.data.work.x,m.data.work.y,m.data.work.zoom]);
+      postMessage({result:steps});
+      console.log(m.data.work, steps, 'Finished!');
     };
     postMessage({result:'ready'});
+   
   });
 }
