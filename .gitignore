@@ -3,3 +3,4 @@ gmp-6.1.2
 mpfr-3.1.5
 Makefile
 node_modules
+mandelbrot.old.cpp

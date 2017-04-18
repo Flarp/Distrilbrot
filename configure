@@ -1,29 +1,35 @@
 #!/bin/bash
 
 
-base_flags="-std=c++11 /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -Impfrcxx -I/usr/local/include -s USE_SDL=0 -s NO_EXIT_RUNTIME=1 -O3 -s ASSERTIONS=1 --llvm-lto 0 -v -s EXPORTED_FUNCTIONS=\"['_mandelbrot_steps', '_mandelbrot_grid','_next_mandelbrot_workset_single','_main']\""
-asm_flags="-o mandelbrot.js --memory-init-file 0 --pre-js packings/asmjs/pre-asmjs.js"
-wasm_flags="-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" -o mandelbrot-wasm.js --pre-js packings/wasm/pre-wasm.js"
-variables="EMCC_DEBUG=1"
+BASE_FLAGS="-std=c++11 /usr/local/lib/libgmp.so /usr/local/lib/libmpfr.a -Impfrcxx -I/usr/local/include -s USE_SDL=0 -s NO_EXIT_RUNTIME=1 -O3 -s ASSERTIONS=1 -v"
+ASM_FLAGS="-o mandelbrot.js --memory-init-file 0 --pre-js packings/asmjs/pre-asmjs.js"
+WASM_FLAGS="-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" -o mandelbrot-wasm.js --pre-js packings/wasm/pre-wasm.js"
+variables=""
+NODE="time node after.js"
+file="mandelbrot.cpp"
 
-node_commands="time node after.js"
+if [ $1 == "--help" ] || [ $1 == "-h" ]
+then
+  printf "\nDistrilbrot - made by Flarp\n"
+  printf "Configure help\n"
+  printf "FLAGS:\n\n"
+  printf "\t--help            Displays the help you're seeing right now\n"
+  printf "\t-h                Also displays the help you're seeing right now\n"
+  printf "\t--debug           Enables debugging information to be outputted from the program, and during compilation\n"
+  printf "\t--install-gmp     Installs GMP and makes it using Emscripten\n"
+  printf "\t--install-mpfr    Installs MPFR and makes it using Emscripten\n"
+  printf "\t--install-mpfrcxx Installs the MPFR C++ wrapper\n"
+  printf "\n\nNOTE: If you're installing everything, you must provide the flags in the order given above (gmp, mpfr, mpfrcxx), as MPFR depends on GMP, and MPFRCXX depends on MPFR\n\n"
+  exit 0
+fi
 
-for arg in "$@"
-do
-  if [ $arg == "--help" ] || [ $arg == "-h" ]
-  then
-    printf "\nDistrilbrot - made by Flarp\n"
-    printf "Configure help\n"
-    printf "FLAGS:\n\n"
-    printf "\t--help\tDisplays the help you're seeing right now\n"
-    printf "\t-h\tAlso displays the help you're seeing right now\n"
-    printf "\t--install-gmp\tInstalls GMP and makes it using Emscripten\n"
-    printf "\t--install-mpfr\tInstalls MPFR and makes it using Emscripten\n"
-    printf "\t--install-mpfrcxx\tInstalls the MPFR C++ wrapper\n"
-    printf "\n\nNOTE: If you're installing everything, you must provide the flags in the order given above (gmp, mpfr, mpfrcxx), as MPFR depends on GMP, and MPFRCXX depends on MPFR\n\n"
-    exit 0
-  fi
-done
+if [ $1 == "--dev" ]
+then
+  variables="EMCC_DEBUG=1"
+  BASE_FLAGS="$BASE_FLAGS -DDEV"
+else
+  BASE_FLAGS="$BASE_FLAGS -s NO_FILESYSTEM=1 --llvm-lto 3"
+fi
 
 # get the number of cores the user has
 cores="$(nproc)"
@@ -35,6 +41,18 @@ if [ $arch == "x86_64" ]
 then
   printf "\033[0;31mThis program will only work on 32 bit versions of Linux, and your computer appears to be 64 bit. No promises this will work.\033[0m\n"
 fi
+
+printf "Checking for g++... "
+
+if hash g++ 2>/dev/null
+then
+  printf "ok\n"
+else
+  printf "no\n"
+  printf "\033[0;31mERROR: g++ not found!\033[0m\n"
+  exit 1
+fi
+
 printf "Checking for em++... "
 
 if hash em++ 2>/dev/null
@@ -76,7 +94,7 @@ if hash asm2wasm 2>/dev/null
 then
   printf "ok\n"
   binaryen=1
-  node_commands="$node_commands --wasm"
+  NODE="$node_commands --wasm"
 else
   printf "none found, webassembly option will be disabled\n"
 fi
@@ -96,7 +114,7 @@ printf "Checking for uglifyjs (optional)... "
 
 if hash uglifyjs 2>/dev/null
 then
-  node_commands="$node_commands --uglify"
+  NODE="$node_commands --uglify"
   printf "ok\n"
 else
   printf "no\n"
@@ -108,20 +126,20 @@ printf "all:\n" >> Makefile
 
 if [ $binaryen -eq 1 ]
 then
-  printf "\ttime $variables em++ mandelbrot.cpp $base_flags $asm_flags && time $variables em++ mandelbrot.cpp $base_flags $wasm_flags && $node_commands\n" >> Makefile
+  printf "\ttime $variables em++ $file $BASE_FLAGS $ASM_FLAGS && time $variables em++ $file $BASE_FLAGS $WASM_FLAGS && $NODE\n" >> Makefile
 else
-   printf "\ttime $variables em++ mandelbrot.cpp $base_flags $asm_flags && $node_commands\n" >> Makefile
+   printf "\ttime $variables em++ $file $BASE_FLAGS $ASM_FLAGS && $NODE\n" >> Makefile
 fi
 
 printf "\n" >> Makefile
 
 printf "js:\n" >> Makefile
-printf "\ttime em++ mandelbrot.cpp $base_flags $asm_flags && $node_commands\n" >> Makefile
+printf "\ttime $variables em++ $file $BASE_FLAGS $ASM_FLAGS && $NODE\n" >> Makefile
 
 printf "\n" >> Makefile
 
 printf "wasm:\n" >> Makefile
-printf "\ttime $variables em++ mandelbrot.cpp $base_flags $wasm_flags && $node_commands\n" >> Makefile
+printf "\ttime $variables em++ $file $BASE_FLAGS $WASM_FLAGS && $NODE\n" >> Makefile
 
 printf "\n" >> Makefile
 
@@ -136,9 +154,10 @@ do
     tar -xvf gmp-6.1.2.tar.lz 
     rm gmp-6.1.2.tar.lz
     cd gmp-6.1.2
+    printf "Starting emscripten compilation of GMP"
     EMCONFIGURE_JS=1 emconfigure ./configure --disable-assembly --enable-cxx
     emmake make -j$cores
-    emmake make install
+
     cd ..
     rm -rf gmp-6.1.2
   elif [ $arg == "--install-mpfr" ]
